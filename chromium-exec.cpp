@@ -8,7 +8,11 @@
 }
 */
 
-/* rm -rf /tmp/chromium-exec && mkdir /tmp/chromium-exec && ( cd /tmp/chromium-exec && git clone --recurse-submodules --quiet https://github.com/safinaskar/libsh-dyo.git && ( cd libsh-dyo && git checkout 4679e649b881dbdc829559a7130a2b2c85f9a948 ) && grep '//@' libsh-dyo/libsh-dyo.cpp | sed 's~ *''//@\( \|\)~~' > libsh-dyo/libsh-dyo.hpp ) && c++ -std=c++17 -O3 -I/tmp/chromium-exec/libsh-dyo -o /tmp/chromium-exec/chromium-exec chromium-exec.cpp /tmp/chromium-exec/libsh-dyo/libsh-dyo.cpp && sudo install /tmp/chromium-exec/chromium-exec /usr/local/bin/; rm -rf /tmp/chromium-exec */
+/*
+grep '//@' libsh-dyo/libsh-dyo.cpp | sed 's~ *''//@\( \|\)~~' > libsh-dyo/libsh-dyo.hpp
+c++ -std=c++17 -O3 -Ilibsh-dyo -o chromium-exec chromium-exec.cpp libsh-dyo/libsh-dyo.cpp
+sudo install chromium-exec /usr/local/bin/
+*/
 
 /* { "request": [[<input byte>, <input byte>, ...], <executable>, [<argv[0]>, <argv[1]>, ...]] } */
 
