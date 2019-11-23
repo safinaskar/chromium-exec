@@ -1,3 +1,3 @@
-[submodule "libsh-dyo"]
-	path = libsh-dyo
-	url = https://github.com/safinaskar/libsh-dyo
+[submodule "libsh-treis"]
+	path = libsh-treis
+	url = https://github.com/safinaskar/libsh-treis

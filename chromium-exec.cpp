@@ -1,3 +1,5 @@
+// TREISDEP
+
 /*
 {
   "name": "chromium_exec",
@@ -8,22 +10,23 @@
 }
 */
 
-/*
-grep '//@' libsh-dyo/libsh-dyo.cpp | sed 's~ *''//@\( \|\)~~' > libsh-dyo/libsh-dyo.hpp
-c++ -std=c++17 -O3 -Ilibsh-dyo -o chromium-exec chromium-exec.cpp libsh-dyo/libsh-dyo.cpp
-sudo install chromium-exec /usr/local/bin/
-*/
-
 /* { "request": [[<input byte>, <input byte>, ...], <executable>, [<argv[0]>, <argv[1]>, ...]] } */
 
-#include <string>
-#include <iostream>
-#include <vector>
-#include <optional>
+#include <stdint.h>
+#include <sys/wait.h>
 
-#include <libsh-dyo.hpp>
+#include <string>
+#include <string_view>
+#include <stdexcept>
+#include <exception>
+#include <vector>
+#include <memory>
+
+#include "libsh-treis/libsh-treis.hpp"
 
 using namespace std::string_literals;
+
+namespace tc = libsh_treis::libc;
 
 void
 verbatim (std::string_view *view, const std::string &s)
@@ -41,7 +44,7 @@ one (std::string_view *view)
 {
   if (view->empty ())
     {
-      throw std::runtime_error ("end of string found");
+      throw std::runtime_error ("End of string found");
     }
 
   char result = view->front ();
@@ -94,15 +97,17 @@ json_string (std::string_view *view)
               {
                 int value = std::stoi (std::string (view->substr (0, 4)), nullptr, 16); // I ignore errors in this line
                 view->remove_prefix(4);
+
                 if (value >= 128)
                   {
                     throw std::runtime_error ("Non-ASCII \\uXXXX, this is not supported");
                   }
+
                 result += (char)value;
               }
               break;
             default:
-              throw std::runtime_error ("bad escape");
+              throw std::runtime_error ("Bad escape");
             }
         }
       else if (c == '"')
@@ -127,7 +132,7 @@ to_json_string (const std::string_view &s)
     {
       if (0x0000 <= c && c < 0x0020)
         {
-          result += "\\u"s + libsh_dyo::string_printf ("%04x", (int)c);
+          result += "\\u"s + tc::xasprintf ("%04x", (int)c);
         }
       else
         {
@@ -167,14 +172,14 @@ void
 send (const std::string_view &s)
 {
   uint32_t size = s.size ();
-  libsh_dyo::repeat_write (1, &size, sizeof (size));
-  libsh_dyo::repeat_write (1, s.data (), s.size ());
+  tc::write_repeatedly (1, &size, sizeof (size));
+  tc::write_repeatedly (1, s.data (), s.size ());
 }
 
 int
 main (void)
 {
-  return libsh_dyo::main_helper ([&](void){
+  return libsh_treis::main_helper ([](void){
     std::string output_json;
 
     try
@@ -183,10 +188,10 @@ main (void)
 
         {
           uint32_t size;
-          libsh_dyo::xx_repeat_read (0, &size, sizeof (size));
+          tc::xxread_repeatedly (0, &size, sizeof (size));
 
           input = std::string (size, '\0');
-          libsh_dyo::xx_repeat_read (0, input.data (), size);
+          tc::xxread_repeatedly (0, input.data (), size);
         }
 
         std::string_view view = input;
@@ -244,80 +249,76 @@ main (void)
 
         if (!view.empty ())
           {
-            throw std::runtime_error ("end of string expected");
+            throw std::runtime_error ("End of string expected");
           }
 
-        int parent_to_child_in[2];
-        int child_out_to_parent[2];
-        int child_err_to_parent[2];
+        std::unique_ptr<tc::process> child;
 
-        libsh_dyo::x_pipe (parent_to_child_in);
-        libsh_dyo::x_pipe (child_out_to_parent);
-        libsh_dyo::x_pipe (child_err_to_parent);
+        {
+          tc::pipe_result child_out_to_parent = tc::xpipe ();
+          tc::pipe_result child_err_to_parent = tc::xpipe ();
 
-        pid_t child = libsh_dyo::safe_fork ([&](void){
-          libsh_dyo::x_close (parent_to_child_in[1]);
-          libsh_dyo::x_close (child_out_to_parent[0]);
-          libsh_dyo::x_close (child_err_to_parent[0]);
+          {
+            tc::pipe_result parent_to_child_in = tc::xpipe ();
 
-          libsh_dyo::x_dup2 (parent_to_child_in[0], 0);
-          libsh_dyo::x_dup2 (child_out_to_parent[1], 1);
-          libsh_dyo::x_dup2 (child_err_to_parent[1], 2);
+            child = std::make_unique<tc::process> ([&](void){
+              tc::xdup2 (parent_to_child_in.readable->get (), 0);
+              tc::xdup2 (child_out_to_parent.writable->get (), 1);
+              tc::xdup2 (child_err_to_parent.writable->get (), 2);
 
-          libsh_dyo::x_close (parent_to_child_in[0]);
-          libsh_dyo::x_close (child_out_to_parent[1]);
-          libsh_dyo::x_close (child_err_to_parent[1]);
+              parent_to_child_in = tc::pipe_result ();
+              child_out_to_parent = tc::pipe_result ();
+              child_err_to_parent = tc::pipe_result ();
 
-          libsh_dyo::string_execvp (executable.c_str (), args.begin (), args.end ());
-        });
+              tc::xexecvp_string (executable.c_str (), args.cbegin (), args.cend ());
+            });
 
-        libsh_dyo::x_close (parent_to_child_in[0]);
-        libsh_dyo::x_close (child_out_to_parent[1]);
-        libsh_dyo::x_close (child_err_to_parent[1]);
+            parent_to_child_in.readable = nullptr;
+            child_out_to_parent.writable = nullptr;
+            child_err_to_parent.writable = nullptr;
 
-        libsh_dyo::repeat_write (parent_to_child_in[1], std_input.data (), std_input.size ());
-        libsh_dyo::x_close (parent_to_child_in[1]);
+            tc::write_repeatedly (parent_to_child_in.writable->get (), std_input.data (), std_input.size ());
+          }
 
-        // В идеале нужно слать данные из stdout и stderr в том порядке, в котором они приходят. Но я шлю сперва stdout, а потом stderr. Интерфейс сделан таким, чтобы можно было позже переделать. В частности, расширение должно предполагать, что данные могут идти в любом порядке
-        auto pipe_to_json = [](int fd, const std::string_view &type){
-          for (;;)
-            {
-              // Лимит, указанный в документации: 1 MB, т. е. 1024 * 1024
-              // Нужно:
-              // array_size * 4 + 100 <= 1024 * 1024
-              // array_size * 4 <= 1024 * 1024 - 100
-              // array_size <= (1024 * 1024 - 100)/4
-              char pipe_data[(1024 * 1024 - 100)/4];
+          // В идеале нужно слать данные из stdout и stderr в том порядке, в котором они приходят. Но я шлю сперва stdout, а потом stderr. Интерфейс сделан таким, чтобы можно было позже переделать. В частности, расширение должно предполагать, что данные могут идти в любом порядке
+          auto pipe_to_json = [](std::unique_ptr<tc::fd> fd, const std::string_view &type){
+            for (;;)
+              {
+                // Лимит, указанный в документации: 1 MB, т. е. 1024 * 1024
+                // Нужно:
+                // array_size * 4 + 100 <= 1024 * 1024
+                // array_size * 4 <= 1024 * 1024 - 100
+                // array_size <= (1024 * 1024 - 100)/4
+                char pipe_data[(1024 * 1024 - 100)/4];
 
-              auto have_read = libsh_dyo::repeat_read (fd, pipe_data, sizeof (pipe_data));
+                auto have_read = tc::read_repeatedly (fd->get (), pipe_data, sizeof (pipe_data));
 
-              if (have_read == 0)
-                {
-                  break;
-                }
+                if (have_read == 0)
+                  {
+                    break;
+                  }
 
-              std::string num_array;
+                std::string num_array;
 
-              char buf[sizeof ("255,")];
+                char buf[sizeof ("255,")];
 
-              for (int i = 0; i < have_read - 1; ++i)
-                {
-                  snprintf (buf, sizeof (buf), "%d,", (int)(uint8_t)pipe_data[i]);
-                  num_array += buf;
-                }
+                for (int i = 0; i < have_read - 1; ++i)
+                  {
+                    tc::xsnprintf (buf, sizeof (buf), "%d,", (int)(uint8_t)pipe_data[i]);
+                    num_array += buf;
+                  }
 
-              num_array += std::to_string ((uint8_t)pipe_data[have_read - 1]);
+                num_array += std::to_string ((uint8_t)pipe_data[have_read - 1]);
 
-              send ("{\"type\":"s + to_json_string (type) + ",\"data\":["s + num_array + "]}"s);
-            }
+                send ("{\"type\":"s + to_json_string (type) + ",\"data\":["s + num_array + "]}"s);
+              }
+          };
 
-          libsh_dyo::x_close (fd);
-        };
+          pipe_to_json (std::move (child_out_to_parent.readable), "stdout");
+          pipe_to_json (std::move (child_err_to_parent.readable), "stderr");
+        }
 
-        pipe_to_json (child_out_to_parent[0], "stdout");
-        pipe_to_json (child_err_to_parent[0], "stderr");
-
-        int status = libsh_dyo::waitpid_status (child, 0);
+        int status = tc::xwaitpid_raii (std::move (child), 0);
 
         if (WIFEXITED (status))
           {
