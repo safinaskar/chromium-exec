@@ -1,5 +1,3 @@
-// TREISDEP
-
 /*
 {
   "name": "chromium_exec",
