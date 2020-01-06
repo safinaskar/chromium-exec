@@ -13,7 +13,7 @@ libsh-treis/libsh-treis.hpp: FORCE
 	$(MAKE) -C libsh-treis libsh-treis.hpp
 
 chromium-exec.o: chromium-exec.cpp libsh-treis/libsh-treis.hpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++17 -c $<
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++2a -c $<
 
 libsh-treis/stamp: FORCE
 	$(MAKE) -C libsh-treis
