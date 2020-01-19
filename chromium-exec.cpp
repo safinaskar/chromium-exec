@@ -130,7 +130,7 @@ to_json_string (const std::string_view &s)
     {
       if (0x0000 <= c && c < 0x0020)
         {
-          result += "\\u"s + tc::xasprintf ("%04x", (int)c);
+          result += "\\u"s + tc::x_asprintf ("%04x", (int)c);
         }
       else
         {
@@ -186,10 +186,10 @@ main (void)
 
         {
           uint32_t size;
-          tc::xxread_repeatedly (0, &size, sizeof (size));
+          tc::xx_read_repeatedly (0, &size, sizeof (size));
 
           input = std::string (size, '\0');
-          tc::xxread_repeatedly (0, input.data (), size);
+          tc::xx_read_repeatedly (0, input.data (), size);
         }
 
         std::string_view view = input;
@@ -253,22 +253,22 @@ main (void)
         std::unique_ptr<tc::process> child;
 
         {
-          tc::pipe_result child_out_to_parent = tc::xpipe ();
-          tc::pipe_result child_err_to_parent = tc::xpipe ();
+          tc::pipe_result child_out_to_parent = tc::x_pipe ();
+          tc::pipe_result child_err_to_parent = tc::x_pipe ();
 
           {
-            tc::pipe_result parent_to_child_in = tc::xpipe ();
+            tc::pipe_result parent_to_child_in = tc::x_pipe ();
 
             child = std::make_unique<tc::process> ([&](void){
-              tc::xdup2 (parent_to_child_in.readable->get (), 0);
-              tc::xdup2 (child_out_to_parent.writable->get (), 1);
-              tc::xdup2 (child_err_to_parent.writable->get (), 2);
+              tc::x_dup2 (parent_to_child_in.readable->get (), 0);
+              tc::x_dup2 (child_out_to_parent.writable->get (), 1);
+              tc::x_dup2 (child_err_to_parent.writable->get (), 2);
 
               parent_to_child_in = tc::pipe_result ();
               child_out_to_parent = tc::pipe_result ();
               child_err_to_parent = tc::pipe_result ();
 
-              tc::xexecvp_string (executable.c_str (), args.cbegin (), args.cend ());
+              tc::x_execvp_string (executable.c_str (), args.cbegin (), args.cend ());
             });
 
             parent_to_child_in.readable = nullptr;
@@ -302,7 +302,7 @@ main (void)
 
                 for (int i = 0; i < have_read - 1; ++i)
                   {
-                    tc::xsnprintf (buf, sizeof (buf), "%d,", (int)(uint8_t)pipe_data[i]);
+                    tc::x_snprintf (buf, sizeof (buf), "%d,", (int)(uint8_t)pipe_data[i]);
                     num_array += buf;
                   }
 
@@ -316,7 +316,7 @@ main (void)
           pipe_to_json (std::move (child_err_to_parent.readable), "stderr");
         }
 
-        int status = tc::xwaitpid_raii (std::move (child), 0);
+        int status = tc::x_waitpid_raii (std::move (child), 0);
 
         if (WIFEXITED (status))
           {
