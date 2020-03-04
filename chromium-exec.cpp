@@ -24,6 +24,7 @@
 
 using namespace std::string_literals;
 
+namespace tt = libsh_treis::tools;
 namespace tc = libsh_treis::libc;
 
 void
@@ -316,7 +317,7 @@ main (void)
           pipe_to_json (std::move (child_err_to_parent.readable), "stderr");
         }
 
-        int status = tc::x_waitpid_raii (std::move (child), 0);
+        int status = tc::x_waitpid_raii (tt::not_null_uptr<tc::process> (std::move (child)), 0);
 
         if (WIFEXITED (status))
           {
