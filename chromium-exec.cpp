@@ -260,7 +260,7 @@ main (void)
           {
             tc::pipe_result parent_to_child_in = tc::x_pipe ();
 
-            child = std::make_unique<tc::process> ([&](void){
+            child.reset (new auto (tc::safe_fork ([&](void){
               tc::x_dup2 (parent_to_child_in.readable->get (), 0);
               tc::x_dup2 (child_out_to_parent.writable->get (), 1);
               tc::x_dup2 (child_err_to_parent.writable->get (), 2);
@@ -270,7 +270,7 @@ main (void)
               child_err_to_parent = tc::pipe_result ();
 
               tc::x_execvp_string (executable.c_str (), args.cbegin (), args.cend ());
-            });
+            })));
 
             parent_to_child_in.readable = nullptr;
             child_out_to_parent.writable = nullptr;
