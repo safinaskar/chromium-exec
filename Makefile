@@ -1,7 +1,7 @@
 export
 
 CXX ?= c++
-CPPFLAGS ?=
+CPPFLAGS ?= -DNDEBUG
 CXXFLAGS ?= -O3 -g -flto -Wall -Wextra -pedantic
 LDFLAGS ?= -flto
 
