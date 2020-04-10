@@ -123,7 +123,7 @@ json_string (std::string_view *view)
 }
 
 std::string
-to_json_string (const std::string_view &s)
+to_json_string (std::string_view s)
 {
   std::string result = "\"";
 
@@ -168,7 +168,7 @@ to_json_string (const std::string_view &s)
 }
 
 void
-send (const std::string_view &s)
+send (std::string_view s)
 {
   uint32_t size = s.size ();
   tc::write_repeatedly (1, &size, sizeof (size));
@@ -280,7 +280,7 @@ main (void)
           }
 
           // В идеале нужно слать данные из stdout и stderr в том порядке, в котором они приходят. Но я шлю сперва stdout, а потом stderr. Интерфейс сделан таким, чтобы можно было позже переделать. В частности, расширение должно предполагать, что данные могут идти в любом порядке
-          auto pipe_to_json = [](std::unique_ptr<tc::fd> fd, const std::string_view &type){
+          auto pipe_to_json = [](std::unique_ptr<tc::fd> fd, std::string_view type){
             for (;;)
               {
                 // Лимит, указанный в документации: 1 MB, т. е. 1024 * 1024
