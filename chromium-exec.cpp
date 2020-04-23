@@ -170,9 +170,8 @@ to_json_string (std::string_view s)
 void
 send (std::string_view s)
 {
-  uint32_t size = s.size ();
-  tc::write_repeatedly (1, &size, sizeof (size));
-  tc::write_repeatedly (1, s.data (), s.size ());
+  tc::write_repeatedly (1, tt::any_as_bytes ((uint32_t)s.size ()));
+  tc::write_repeatedly (1, std::as_bytes (std::span<const char> (s)));
 }
 
 int
@@ -187,17 +186,17 @@ main (void)
 
         {
           uint32_t size;
-          tc::xx_read_repeatedly (0, &size, sizeof (size));
+          tc::xx_read_repeatedly (0, tt::any_as_writable_bytes (size));
 
           input = std::string (size, '\0');
-          tc::xx_read_repeatedly (0, input.data (), size);
+          tc::xx_read_repeatedly (0, std::as_writable_bytes (std::span<char> (input)));
         }
 
         std::string_view view = input;
 
         verbatim (&view, "{\"request\":[[");
 
-        std::string std_input;
+        std::vector<std::byte> std_input;
 
         if (!(!view.empty () && view.front () == ']'))
           {
@@ -208,7 +207,7 @@ main (void)
               {
                 if (*iter == ',')
                   {
-                    std_input += (char)current;
+                    std_input.push_back (std::byte (current));
                     current = 0;
                   }
                 else
@@ -220,7 +219,7 @@ main (void)
                 ++iter;
               }
 
-            std_input += (char)current;
+            std_input.push_back (std::byte (current));
             view.remove_prefix (iter - view.cbegin ());
           }
 
@@ -276,7 +275,7 @@ main (void)
             child_out_to_parent.writable = nullptr;
             child_err_to_parent.writable = nullptr;
 
-            tc::write_repeatedly (parent_to_child_in.writable->get (), std_input.data (), std_input.size ());
+            tc::write_repeatedly (parent_to_child_in.writable->get (), std_input);
           }
 
           // В идеале нужно слать данные из stdout и stderr в том порядке, в котором они приходят. Но я шлю сперва stdout, а потом stderr. Интерфейс сделан таким, чтобы можно было позже переделать. В частности, расширение должно предполагать, что данные могут идти в любом порядке
@@ -288,11 +287,11 @@ main (void)
                 // array_size * 4 + 100 <= 1024 * 1024
                 // array_size * 4 <= 1024 * 1024 - 100
                 // array_size <= (1024 * 1024 - 100)/4
-                char pipe_data[(1024 * 1024 - 100)/4];
+                std::byte pipe_data[(1024 * 1024 - 100)/4];
 
-                auto have_read = tc::read_repeatedly (fd->get (), pipe_data, sizeof (pipe_data));
+                auto have_read = tc::read_repeatedly (fd->get (), pipe_data);
 
-                if (have_read == 0)
+                if (have_read.size () == 0)
                   {
                     break;
                   }
@@ -301,13 +300,13 @@ main (void)
 
                 char buf[sizeof ("255,")];
 
-                for (int i = 0; i < have_read - 1; ++i)
+                for (auto i = have_read.cbegin (); i != have_read.cend () - 1; ++i)
                   {
-                    tc::x_snprintf (buf, sizeof (buf), "%d,", (int)(uint8_t)pipe_data[i]);
+                    tc::x_snprintf (buf, "%d,", (int)(uint8_t)*i);
                     num_array += buf;
                   }
 
-                num_array += std::to_string ((uint8_t)pipe_data[have_read - 1]);
+                num_array += std::to_string ((uint8_t)have_read.back ());
 
                 send ("{\"type\":"s + to_json_string (type) + ",\"data\":["s + num_array + "]}"s);
               }
