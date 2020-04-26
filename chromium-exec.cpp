@@ -127,7 +127,7 @@ to_json_string (std::string_view s)
 {
   std::string result = "\"";
 
-  for (char c : s)
+  for (const char c : s)
     {
       if (0x0000 <= c && c < 0x0020)
         {
