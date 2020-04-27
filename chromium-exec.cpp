@@ -260,9 +260,9 @@ main (void)
             tc::pipe_result parent_to_child_in = tc::x_pipe ();
 
             child.reset (new auto (tc::safe_fork ([&](void){
-              tc::x_dup2 (parent_to_child_in.readable->get (), 0);
-              tc::x_dup2 (child_out_to_parent.writable->get (), 1);
-              tc::x_dup2 (child_err_to_parent.writable->get (), 2);
+              tc::x_dup2 (parent_to_child_in.readable->resource (), 0);
+              tc::x_dup2 (child_out_to_parent.writable->resource (), 1);
+              tc::x_dup2 (child_err_to_parent.writable->resource (), 2);
 
               parent_to_child_in = tc::pipe_result ();
               child_out_to_parent = tc::pipe_result ();
@@ -275,7 +275,7 @@ main (void)
             child_out_to_parent.writable = nullptr;
             child_err_to_parent.writable = nullptr;
 
-            tc::write_repeatedly (parent_to_child_in.writable->get (), std_input);
+            tc::write_repeatedly (parent_to_child_in.writable->resource (), std_input);
           }
 
           // В идеале нужно слать данные из stdout и stderr в том порядке, в котором они приходят. Но я шлю сперва stdout, а потом stderr. Интерфейс сделан таким, чтобы можно было позже переделать. В частности, расширение должно предполагать, что данные могут идти в любом порядке
