@@ -177,7 +177,7 @@ send (std::string_view s)
 int
 main (void)
 {
-  return libsh_treis::main_helper ([](void){
+  return tt::main_helper ([](void){
     std::string output_json;
 
     try
