@@ -289,7 +289,7 @@ main (void)
                 // array_size <= (1024 * 1024 - 100)/4
                 std::byte pipe_data[(1024 * 1024 - 100)/4];
 
-                auto have_read = tc::read_repeatedly (fd->get (), pipe_data);
+                auto have_read = tc::read_repeatedly (fd->resource (), pipe_data);
 
                 if (have_read.size () == 0)
                   {
