@@ -1,0 +1,87 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+shopt -s inherit_errexit
+
+export LC_ALL=C
+
+t(){
+  read -r IN
+
+  if [ "${#IN}" -ge 256 ]; then
+    echo "${0##*/}: input is too big" >&2
+    exit 1
+  fi
+
+  while read -r EXP; do
+    if [ "${#EXP}" -ge 256 ]; then
+      echo "${0##*/}: expected output is too big" >&2
+      exit 1
+    fi
+
+    printf "\\x$(printf '%02x' "${#EXP}")\0\0\0%s" "$EXP"
+  done > "$DIR/expected"
+
+  printf "\\x$(printf '%02x' "${#IN}")\0\0\0%s" "$IN" | "$EXE" > "$DIR/actual"
+
+  if ! cmp "$DIR/actual" "$DIR/expected"; then
+    echo "${0##*/}: wrong answer; input: <$IN>" >&2
+    echo "${0##*/}: expected:" >&2
+    cat "$DIR/expected" >&2
+    echo "${0##*/}: actual:" >&2
+    cat "$DIR/actual" >&2
+    echo >&2
+    exit 1
+  fi
+
+  :
+}
+
+[ $# != 1 ] && echo "Usage: ${0##*/} EXECUTABLE" >&2 && exit 1
+
+EXE="$1"
+
+DIR="$(mktemp -d /tmp/test-chromium-exec-XXXXXX)"
+
+echo "Should print \"Success\" in the end"
+
+t << "EOF"
+{"request":[[],"echo",["echo","a"]]}
+{"type":"stdout","data":[97,10]}
+{"type":"terminated","reason":"exited","code":0}
+EOF
+
+t << "EOF"
+{"request":[[],"bash",["bash","-c","[ 'д' = \"$(printf '\\xd0\\xb4')\" ]"]]}
+{"type":"terminated","reason":"exited","code":0}
+EOF
+
+t << "EOF"
+{"request":[[208,180],"bash",["bash","-c","[ 'д' = \"$(cat)\" ]"]]}
+{"type":"terminated","reason":"exited","code":0}
+EOF
+
+t << "EOF"
+{"request":[[],"bash",["bash","-c","printf 'д'"]]}
+{"type":"stdout","data":[208,180]}
+{"type":"terminated","reason":"exited","code":0}
+EOF
+
+t << "EOF"
+{"request":[[],"bash",["bash","-c","exit 1"]]}
+{"type":"terminated","reason":"exited","code":1}
+EOF
+
+t << "EOF"
+{"request":[[],"bash",["bash","-c","echo a >&2"]]}
+{"type":"stderr","data":[97,10]}
+{"type":"terminated","reason":"exited","code":0}
+EOF
+
+t << "EOF"
+{"request":[[],"bash",["bash","-c","kill -9 $$"]]}
+{"type":"terminated","reason":"signaled","signal":9}
+EOF
+
+echo "Success"
