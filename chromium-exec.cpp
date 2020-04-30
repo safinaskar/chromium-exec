@@ -190,6 +190,12 @@ main (void)
 
           input = std::string (size, '\0');
           tc::xx_read_repeatedly (0, std::as_writable_bytes (std::span<char> (input)));
+
+          char c;
+          if (read (0, &c, 1) != 0)
+            {
+              throw std::runtime_error ("No EOF (or reading failed)");
+            }
         }
 
         std::string_view view = input;
