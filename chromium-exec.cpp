@@ -191,11 +191,8 @@ main (void)
           input = std::string (size, '\0');
           tc::xx_read_repeatedly (0, std::as_writable_bytes (std::span<char> (input)));
 
-          char c;
-          if (read (0, &c, 1) != 0)
-            {
-              throw std::runtime_error ("No EOF (or reading failed)");
-            }
+          // Опыт показывает, что не нужно пытаться прочитать тут ещё байт, чтобы выяснить, что у нас EOF. Это приводит к зависанию
+          tc::x_close (0);
         }
 
         std::string_view view = input;
