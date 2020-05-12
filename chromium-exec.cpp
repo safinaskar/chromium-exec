@@ -308,7 +308,7 @@ main (void)
 
                 for (auto i = have_read.cbegin (); i != have_read.cend () - 1; ++i)
                   {
-                    tc::x_snprintf (buf, "%d,", (int)(uint8_t)*i);
+                    tc::xx_snprintf (buf, "%d,", (int)(uint8_t)*i);
                     num_array += buf;
                   }
 
