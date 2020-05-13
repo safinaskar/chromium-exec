@@ -192,7 +192,6 @@ main (void)
           tc::xx_read_repeatedly (0, std::as_writable_bytes (std::span<char> (input)));
 
           // Опыт показывает, что не нужно пытаться прочитать тут ещё байт, чтобы выяснить, что у нас EOF. Это приводит к зависанию
-          tc::x_close (0);
         }
 
         std::string_view view = input;
