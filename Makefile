@@ -7,6 +7,8 @@ LDFLAGS ?= -flto
 
 all: chromium-exec
 
+.DELETE_ON_ERROR:
+
 FORCE:
 
 libsh-treis/libsh-treis.hpp: FORCE
