@@ -15,8 +15,8 @@ libsh-treis/libsh-treis.hpp: FORCE
 chromium-exec.o: chromium-exec.cpp libsh-treis/libsh-treis.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++2a -c $<
 
-libsh-treis/stamp: FORCE
-	$(MAKE) -C libsh-treis
+libsh-treis/lib.a: FORCE
+	$(MAKE) -C libsh-treis lib.a
 
-chromium-exec: chromium-exec.o libsh-treis/stamp
-	$(CXX) $(LDFLAGS) -o $@ $< $$(find -L libsh-treis -name '*.o') $$(cat $$(find -L libsh-treis -name libs))
+chromium-exec: chromium-exec.o libsh-treis/lib.a
+	$(CXX) $(LDFLAGS) -o $@ $^ $$(cat $$(find -L libsh-treis -name libs))
