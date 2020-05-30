@@ -11,14 +11,11 @@ all: chromium-exec
 
 FORCE:
 
-libsh-treis/libsh-treis.hpp: FORCE
-	$(MAKE) -C libsh-treis libsh-treis.hpp
+libsh-treis/%: FORCE
+	T='$@'; $(MAKE) -C "$${T%%/*}" "$${T#*/}"
 
-chromium-exec.o: chromium-exec.cpp libsh-treis/libsh-treis.hpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++2a -c $<
-
-libsh-treis/lib.a: FORCE
-	$(MAKE) -C libsh-treis lib.a
+chromium-exec.o: chromium-exec.cpp FORCE
+	libsh-treis/compile $< $(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++2a
 
 chromium-exec: chromium-exec.o libsh-treis/lib.a
 	$(CXX) $(LDFLAGS) -o $@ $^ $$(cat $$(find -L libsh-treis -name libs))
