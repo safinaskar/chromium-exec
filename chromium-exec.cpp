@@ -302,7 +302,7 @@ main (void)
 
                 char buf[sizeof ("255,")];
 
-                for (auto i = have_read.cbegin (); i != have_read.cend () - 1; ++i)
+                for (auto i = std::cbegin (have_read); i != std::cend (have_read) - 1; ++i)
                   {
                     tc::xx_snprintf (buf, "%d,", (int)(uint8_t)*i);
                     num_array += buf;
