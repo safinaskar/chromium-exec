@@ -38,9 +38,9 @@ t(){
   :
 }
 
-[ $# != 1 ] && echo "Usage: ${0##*/} EXECUTABLE" >&2 && exit 1
+[ $# != 0 ] && echo "Usage: ${0##*/}" >&2 && exit 1
 
-EXE="$1"
+EXE="${0%/*}/chromium-exec"
 
 DIR="$(mktemp -d /tmp/test-chromium-exec-XXXXXX)"
 
