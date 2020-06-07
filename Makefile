@@ -18,4 +18,4 @@ chromium-exec.o: chromium-exec.cpp FORCE
 	libsh-treis/compile $< $(CXX) $(CPPFLAGS) $(CXXFLAGS) -std=c++2a
 
 chromium-exec: chromium-exec.o libsh-treis/lib.a
-	$(CXX) $(LDFLAGS) -o $@ $^ $$(cat $$(find -L libsh-treis -name libs))
+	$(CXX) $(LDFLAGS) -o $@ $^ $$(cat $$(find -L libsh-treis -name libs) < /dev/null)
