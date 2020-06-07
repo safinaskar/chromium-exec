@@ -44,7 +44,7 @@ EXE="${0%/*}/chromium-exec"
 
 DIR="$(mktemp -d /tmp/test-chromium-exec-XXXXXX)"
 
-echo "Should print \"Success\" in the end"
+echo "${0##*/}: wait for \"success\"" >&2
 
 t << "EOF"
 {"request":[[],"echo",["echo","a"]]}
@@ -84,4 +84,4 @@ t << "EOF"
 {"type":"terminated","reason":"signaled","signal":9}
 EOF
 
-echo "Success"
+echo "${0##*/}: success" >&2
