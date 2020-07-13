@@ -62,5 +62,22 @@ const chromiumExec = {
     result.stderr = await new Response(result.stderr).arrayBuffer();
 
     return result;
+  },
+
+  async execSuccess(args){
+    let result = await chromiumExec.exec(args);
+
+    if(result.reason !== "exited"){
+      throw Error("Terminated, but not exited");
+    }
+
+    if(result.code !== 0){
+      throw Error("Code is not 0");
+    }
+
+    delete result.reason;
+    delete result.code;
+
+    return result;
   }
 };
