@@ -1,9 +1,15 @@
 export
 
 CXX ?= c++
+ifeq ($(RELEASE),1)
 CPPFLAGS ?= -DNDEBUG
 CXXFLAGS ?= -O3 -g -flto -Wall -Wextra -pedantic
-LDFLAGS ?= -flto
+LDFLAGS ?= -O3 -g -flto
+else
+CPPFLAGS ?=
+CXXFLAGS ?= -g -Wall -Wextra -pedantic -fsanitize=undefined,bounds,nullability,float-divide-by-zero,implicit-conversion -fno-sanitize-recover=all -fno-omit-frame-pointer
+LDFLAGS ?= -g -fsanitize=undefined,bounds,nullability,float-divide-by-zero,implicit-conversion -fno-sanitize-recover=all -fno-omit-frame-pointer
+endif
 
 all: chromium-exec
 
