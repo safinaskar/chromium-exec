@@ -7,8 +7,8 @@ CXXFLAGS ?= -O3 -g -flto -Wall -Wextra -pedantic
 LDFLAGS ?= -O3 -g -flto
 else
 CPPFLAGS ?=
-CXXFLAGS ?= -g -Wall -Wextra -pedantic -fsanitize=undefined,bounds,nullability,float-divide-by-zero,implicit-conversion -fno-sanitize-recover=all -fno-omit-frame-pointer
-LDFLAGS ?= -g -fsanitize=undefined,bounds,nullability,float-divide-by-zero,implicit-conversion -fno-sanitize-recover=all -fno-omit-frame-pointer
+CXXFLAGS ?= -g -Wall -Wextra -pedantic -fsanitize=undefined,bounds,nullability,float-divide-by-zero,implicit-conversion,address -fno-sanitize-recover=all -fno-omit-frame-pointer -fsanitize-address-use-after-scope -fno-optimize-sibling-calls
+LDFLAGS ?= -g -fsanitize=undefined,bounds,nullability,float-divide-by-zero,implicit-conversion,address -fno-sanitize-recover=all -fno-omit-frame-pointer -fsanitize-address-use-after-scope -fno-optimize-sibling-calls
 endif
 
 all: chromium-exec
