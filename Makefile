@@ -1,13 +1,15 @@
 export
 
+include libsh-treis/common.mk
+
 CXX ?= c++
 ifeq ($(RELEASE),1)
 CPPFLAGS ?= -DNDEBUG
-CXXFLAGS ?= -O3 -g -flto -Wall -Wextra -pedantic
+CXXFLAGS ?= -O3 -g -flto $(WARNS) -pedantic
 LDFLAGS ?= -O3 -g -flto
 else
 CPPFLAGS ?=
-CXXFLAGS ?= -g -Wall -Wextra -pedantic -fsanitize=undefined,bounds,nullability,float-divide-by-zero,implicit-conversion,address -fno-sanitize-recover=all -fno-omit-frame-pointer -fsanitize-address-use-after-scope -fno-optimize-sibling-calls
+CXXFLAGS ?= -g $(WARNS) -pedantic -fsanitize=undefined,bounds,nullability,float-divide-by-zero,implicit-conversion,address -fno-sanitize-recover=all -fno-omit-frame-pointer -fsanitize-address-use-after-scope -fno-optimize-sibling-calls
 LDFLAGS ?= -g -fsanitize=undefined,bounds,nullability,float-divide-by-zero,implicit-conversion,address -fno-sanitize-recover=all -fno-omit-frame-pointer -fsanitize-address-use-after-scope -fno-optimize-sibling-calls
 endif
 
