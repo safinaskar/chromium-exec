@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Ещё нужно вручную протестировать, что работают chunks (т. е. ситуация, когда stdout ребёнка слишком большой)
+
 set -e
 set -o pipefail
 shopt -s inherit_errexit
@@ -28,9 +30,9 @@ t(){
   if ! cmp "$DIR/actual" "$DIR/expected"; then
     echo "${0##*/}: wrong answer; input: <$IN>" >&2
     echo "${0##*/}: expected:" >&2
-    cat "$DIR/expected" >&2
+    cat -vET "$DIR/expected" >&2
     echo "${0##*/}: actual:" >&2
-    cat "$DIR/actual" >&2
+    cat -vET "$DIR/actual" >&2
     echo >&2
     exit 1
   fi
@@ -38,9 +40,9 @@ t(){
   :
 }
 
-[ $# != 0 ] && echo "Usage: ${0##*/}" >&2 && exit 1
+[ $# != 1 ] && echo "Usage: ${0##*/} EXE" >&2 && exit 1
 
-EXE="${0%/*}/chromium-exec"
+EXE="$1"
 
 DIR="$(mktemp -d /tmp/test-chromium-exec-XXXXXX)"
 
@@ -69,8 +71,24 @@ t << "EOF"
 EOF
 
 t << "EOF"
-{"request":[[],"bash",["bash","-c","exit 1"]]}
-{"type":"terminated","reason":"exited","code":1}
+{"request":[[],"bash",["bash","-c","exit 10"]]}
+{"type":"terminated","reason":"exited","code":10}
+EOF
+
+t << "EOF"
+{"request":[[],"bash",["foo","-c","exit 10"]]}
+{"type":"terminated","reason":"exited","code":10}
+EOF
+
+t << "EOF"
+{"request":[[],"true",["a"]]}
+{"type":"terminated","reason":"exited","code":0}
+EOF
+
+t << "EOF"
+{"request":[[],"bash",["a","-c","echo \"$0\""]]}
+{"type":"stdout","data":[97,10]}
+{"type":"terminated","reason":"exited","code":0}
 EOF
 
 t << "EOF"

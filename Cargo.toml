@@ -1,0 +1,10 @@
+cargo-features = ["edition2021"]
+
+[package]
+name = "chromium-exec"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde_json = { version = "1.0.64", features = ["preserve_order"] }
+serde = { version = "1.0.126", features = ["derive"] }
