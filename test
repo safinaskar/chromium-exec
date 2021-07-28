@@ -50,56 +50,56 @@ echo "${0##*/}: wait for \"success\"" >&2
 
 t << "EOF"
 {"request":[[],"echo",["echo","a"]]}
-{"type":"stdout","data":[97,10]}
-{"type":"terminated","reason":"exited","code":0}
+{"data":[97,10],"type":"stdout"}
+{"code":0,"reason":"exited","type":"terminated"}
 EOF
 
 t << "EOF"
 {"request":[[],"bash",["bash","-c","[ 'д' = \"$(printf '\\xd0\\xb4')\" ]"]]}
-{"type":"terminated","reason":"exited","code":0}
+{"code":0,"reason":"exited","type":"terminated"}
 EOF
 
 t << "EOF"
 {"request":[[208,180],"bash",["bash","-c","[ 'д' = \"$(cat)\" ]"]]}
-{"type":"terminated","reason":"exited","code":0}
+{"code":0,"reason":"exited","type":"terminated"}
 EOF
 
 t << "EOF"
 {"request":[[],"bash",["bash","-c","printf 'д'"]]}
-{"type":"stdout","data":[208,180]}
-{"type":"terminated","reason":"exited","code":0}
+{"data":[208,180],"type":"stdout"}
+{"code":0,"reason":"exited","type":"terminated"}
 EOF
 
 t << "EOF"
 {"request":[[],"bash",["bash","-c","exit 10"]]}
-{"type":"terminated","reason":"exited","code":10}
+{"code":10,"reason":"exited","type":"terminated"}
 EOF
 
 t << "EOF"
 {"request":[[],"bash",["foo","-c","exit 10"]]}
-{"type":"terminated","reason":"exited","code":10}
+{"code":10,"reason":"exited","type":"terminated"}
 EOF
 
 t << "EOF"
 {"request":[[],"true",["a"]]}
-{"type":"terminated","reason":"exited","code":0}
+{"code":0,"reason":"exited","type":"terminated"}
 EOF
 
 t << "EOF"
 {"request":[[],"bash",["a","-c","echo \"$0\""]]}
-{"type":"stdout","data":[97,10]}
-{"type":"terminated","reason":"exited","code":0}
+{"data":[97,10],"type":"stdout"}
+{"code":0,"reason":"exited","type":"terminated"}
 EOF
 
 t << "EOF"
 {"request":[[],"bash",["bash","-c","echo a >&2"]]}
-{"type":"stderr","data":[97,10]}
-{"type":"terminated","reason":"exited","code":0}
+{"data":[97,10],"type":"stderr"}
+{"code":0,"reason":"exited","type":"terminated"}
 EOF
 
 t << "EOF"
 {"request":[[],"bash",["bash","-c","kill -9 $$"]]}
-{"type":"terminated","reason":"signaled","signal":9}
+{"reason":"signaled","signal":9,"type":"terminated"}
 EOF
 
 echo "${0##*/}: success" >&2

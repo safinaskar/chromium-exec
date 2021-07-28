@@ -12,6 +12,8 @@
 
 // Сначала пишет весь stdin в процесс и потом вычитывает stdout и stderr, это может привести к deadlock'у
 // Было бы неплохо писать в stdout хотя бы о некоторых ошибках, например, об отсутствии бинарника, вместо "panic!"
+// Эта программа только для UNIX-like, все зависимости от окружения прямо указаны
+// Протокол изначально придумывался для самописного JSON-парсера, теперь протокол JSON'а от Chrome к этому бинарю можно сделать более естественным
 
 use std::io::Read;
 use std::io::Write;
@@ -56,21 +58,27 @@ fn main() {
         .stderr(std::process::Stdio::piped())
         .spawn()
         .unwrap();
+
     child.stdin.as_ref().unwrap().write_all(&input_for_exec).unwrap();
+
     let output = child.wait_with_output().unwrap();
+
     // В идеале нужно слать данные из stdout и stderr в том порядке, в котором они приходят. Но я шлю сперва stdout, а потом stderr. Протокол сделан таким, чтобы можно было позже переделать. В частности, расширение должно предполагать, что данные могут идти в любом порядке
 
     // Лимит, указанный в документации: 1 MB, т. е. 1024 * 1024
     // Нужно:
     // array_size * 4 + 100 <= 1024 * 1024
     // array_size * 4 <= 1024 * 1024 - 100
-    // array_size <= (1024 * 1024 - 100)/4
+    // array_size <= (1024 * 1024 - 100) / 4
+
     for chunk in output.stdout.chunks((1024 * 1024 - 100) / 4) {
         send(&serde_json::json!({"type": "stdout", "data": chunk}));
     };
+
     for chunk in output.stderr.chunks((1024 * 1024 - 100) / 4) {
         send(&serde_json::json!({"type": "stderr", "data": chunk}));
     };
+
     if let Some(sig) = output.status.signal() {
         send(&serde_json::json!({"type": "terminated", "reason": "signaled", "signal": sig}));
     } else if let Some(code) = output.status.code() {
