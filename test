@@ -102,4 +102,11 @@ t << "EOF"
 {"reason":"signaled","signal":9,"type":"terminated"}
 EOF
 
+# Этот тест проверяет, что мы не забыли закрыть пайп от нас к ребёнку после записи туда данных (если забыли - на этом тесте будет deadlock)
+t << "EOF"
+{"request":[[97,10],"cat",["cat"]]}
+{"data":[97,10],"type":"stdout"}
+{"code":0,"reason":"exited","type":"terminated"}
+EOF
+
 echo "${0##*/}: success" >&2

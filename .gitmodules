@@ -1,0 +1,3 @@
+[submodule "my-libc-rs"]
+	path = my-libc-rs
+	url = https://git.sr.ht/~safinaskar/my-libc-rs
