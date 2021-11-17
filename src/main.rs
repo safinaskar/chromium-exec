@@ -10,9 +10,9 @@
 
 // { "request": [[<input byte>, <input byte>, ...], <executable>, [<argv[0]>, <argv[1]>, ...]] }
 
-// Сначала пишет весь stdin в процесс и потом вычитывает stdout и stderr, это может привести к deadlock'у
 // Было бы неплохо писать в stdout хотя бы о некоторых ошибках, например, об отсутствии бинарника, вместо "panic!"
 // Протокол изначально придумывался для самописного JSON-парсера, теперь протокол JSON'а от Chrome к этому бинарю можно сделать более естественным
+// Исходим из предположения, что можно сперва целиком записать в процесс вход для него, потом целиком прочитать stdout и потом целиком прочитать stderr
 
 #![deny(unsafe_code)]
 
@@ -24,7 +24,7 @@ struct Input {
 
 fn send(json: &serde_json::Value) {
     let vec = serde_json::ser::to_vec(json).unwrap();
-    let () = my_libc::write_repeatedly(1, &(vec.len() as u32).to_ne_bytes()).unwrap();
+    let () = my_libc::write_repeatedly(1, &std::convert::identity::<u32>(vec.len().try_into().unwrap()).to_ne_bytes()).unwrap();
     let () = my_libc::write_repeatedly(1, &vec).unwrap();
 }
 
@@ -40,7 +40,7 @@ fn main() {
         serde_json::from_slice(&input).unwrap()
     };
 
-    if args.len() == 0 {
+    if args.is_empty() {
         panic!();
     };
 
@@ -70,15 +70,9 @@ fn main() {
     let () = my_libc::write_repeatedly(child_stdin.writable.0, &input_for_exec).unwrap();
     drop(child_stdin.writable);
 
-    // Лимит, указанный в документации: 1 MB, т. е. 1024 * 1024
-    // Нужно:
-    // array_size * 4 + 100 <= 1024 * 1024
-    // array_size * 4 <= 1024 * 1024 - 100
-    // array_size <= (1024 * 1024 - 100) / 4
-
     fn send_chunks(fd: my_libc::FD, name: &str) {
         loop {
-            let mut buf = [0u8; (1024 * 1024 - 100) / 4];
+            let mut buf = [0u8; chromium_exec::CHUNK_SIZE];
             let got = my_libc::read_repeatedly(fd.0, &mut buf).unwrap();
 
             if got.is_empty() {

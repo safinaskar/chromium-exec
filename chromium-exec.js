@@ -1,7 +1,6 @@
 "use strict";
 
 const chromiumExec = {
-  // Я не знаю, что будет, если передать сюда огромный input
   async exec({ input = new ArrayBuffer(0), executable, argv }){
     if(typeof input === "string"){
       input = new TextEncoder().encode(input).buffer;
@@ -79,5 +78,15 @@ const chromiumExec = {
     delete result.code;
 
     return result;
+  },
+
+  bufferToStr(buffer){
+    return new TextDecoder().decode(new Uint8Array(buffer));
+  },
+
+  async test(){
+    if(chromiumExec.bufferToStr((await chromiumExec.execSuccess({ argv: ["echo", "ok"] })).stdout) !== "ok"){
+      throw Error("Failed");
+    }
   }
 };

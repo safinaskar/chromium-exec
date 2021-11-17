@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y apt-utils gcc curl less nano mc whiptai
 
 # User
 RUN useradd --create-home --uid 1000 --shell /bin/bash user
-# RUN echo 'user ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/a
+RUN echo 'user ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/a
 USER user
 WORKDIR /home/user
 

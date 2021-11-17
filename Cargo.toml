@@ -7,3 +7,9 @@ edition = "2021"
 serde_json = "1.0.64"
 serde = { version = "1.0.126", features = ["derive"] }
 my-libc = { path = "my-libc-rs" }
+
+# У меня есть долгие тесты, поэтому включаю оптимизацию. Плюс я не собираюсь использовать debugger
+[profile.dev]
+opt-level = 3
+[profile.test]
+opt-level = 3
