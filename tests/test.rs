@@ -1,3 +1,12 @@
+#![allow(clippy::needless_return)]
+#![allow(clippy::missing_safety_doc)]
+#![allow(clippy::redundant_field_names)]
+#![allow(clippy::result_unit_err)]
+#![deny(unsafe_op_in_unsafe_fn)]
+#![deny(clippy::as_conversions)] // Потому что "as" может сконвертить что угодно куда угодно
+
+#![deny(unsafe_code)]
+
 use std::ffi::CString;
 
 fn test_raw_json_input(input: Vec<u8>, output: Vec<serde_json::Value>) {

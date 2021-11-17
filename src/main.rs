@@ -14,6 +14,13 @@
 // Протокол изначально придумывался для самописного JSON-парсера, теперь протокол JSON'а от Chrome к этому бинарю можно сделать более естественным
 // Исходим из предположения, что можно сперва целиком записать в процесс вход для него, потом целиком прочитать stdout и потом целиком прочитать stderr
 
+#![allow(clippy::needless_return)]
+#![allow(clippy::missing_safety_doc)]
+#![allow(clippy::redundant_field_names)]
+#![allow(clippy::result_unit_err)]
+#![deny(unsafe_op_in_unsafe_fn)]
+#![deny(clippy::as_conversions)] // Потому что "as" может сконвертить что угодно куда угодно
+
 #![deny(unsafe_code)]
 
 #[derive(serde::Deserialize)]

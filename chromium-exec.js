@@ -85,7 +85,19 @@ const chromiumExec = {
   },
 
   async test(){
-    if(chromiumExec.bufferToStr((await chromiumExec.execSuccess({ argv: ["echo", "ok"] })).stdout) !== "ok"){
+    if(chromiumExec.bufferToStr((await chromiumExec.execSuccess({ argv: ["echo", "ok"] })).stdout) !== "ok\n"){
+      throw Error("Failed");
+    }
+
+    if(chromiumExec.bufferToStr((await chromiumExec.execSuccess({ input: "foo", argv: ["cat"] })).stdout) !== "foo"){
+      throw Error("Failed");
+    }
+
+    if(chromiumExec.bufferToStr((await chromiumExec.execSuccess({ input: "a".repeat(20 * 1000 * 1000), argv: ["md5sum"] })).stdout) !== "c435d04042ea0663ba580ee27f494712  -\n"){
+      throw Error("Failed");
+    }
+
+    if(chromiumExec.bufferToStr((await chromiumExec.execSuccess({ argv: ["sh", "-c", "yes '' | head -c 1000000"] })).stdout) !== "\n".repeat(1000 * 1000)){
       throw Error("Failed");
     }
   }
